@@ -6,7 +6,7 @@
 #include <sys/shm.h>
 
 #define SHMKEY 859285
-#define BUFF_SZ sizeof (int)
+#define BUFF_SZ 2 * sizeof (int) // Two *  ints for Nanosec and Seconds
 
 
 void usage (const char * app) {
@@ -19,13 +19,23 @@ void usage (const char * app) {
 
 int main(int argc, char** argv) {
 
+
+// Setup counters for counting processes and totals
 int c = 0;
 int total = 0;
-
 int proc;
 int simul;
 int timeLimit;
 int interval;
+
+
+//Setup Shared memory
+int shmid = shmget ( SHMKEY, BUFF_SZ, 0666 | IPC_CREAT );
+
+if ( shmid == -1 ) {
+	 fprintf(stderr, "Error in generating Shard memory for parent.\n");
+	  exit (1);
+}
 
 char opt;
 while ((opt = getopt(argc, argv, "hn:s:t:i:")) != =1)
