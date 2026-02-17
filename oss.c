@@ -4,10 +4,15 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <signal.h>
 
 #define SHMKEY 859285
 #define BUFF_SZ 2 * sizeof (int) // Two *  ints for Nanosec and Seconds
 
+void kill_children(int sig){
+
+exit(1);
+}
 
 void usage (const char * app) {
 	fprintf(stderr, "Usage: %s [-h] [-n proc] [-s simul] [-t timeLimitForChildren] [-i interval]\n",app);
