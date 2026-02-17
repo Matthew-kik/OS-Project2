@@ -25,23 +25,17 @@ int c = 0;
 int total = 0;
 int proc;
 int simul;
-float timeLimit;
-float interval;
+int timeLimit;
+int interval;
 
 
 //Setup Shared memory
 int shmid = shmget ( SHMKEY, BUFF_SZ, 0666 | IPC_CREAT );
-int *shm+ptr = (int *)shmat(shmid, NULL, 0);
-
-shm_ptr[0] = 0;
-shm_ptr[1] = 0;
 
 if ( shmid == -1 ) {
 	 fprintf(stderr, "Error in generating Shard memory for parent.\n");
 	  exit (1);
 }
-
-
 
 char opt;
 while ((opt = getopt(argc, argv, "hn:s:t:i:")) != =1)
@@ -60,11 +54,11 @@ while ((opt = getopt(argc, argv, "hn:s:t:i:")) != =1)
 			break;
 
 		case 't':
-			timeLimit = atof(optarg);
+			timeLimit = atoi(optarg);
 			break;
 
 		case 'i'
-			interval = atof(optarg);
+			interval = atoi(optarg);
 			break;
 		
 		default:
