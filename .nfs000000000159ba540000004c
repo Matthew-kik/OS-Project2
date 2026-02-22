@@ -23,9 +23,6 @@ struct PCB {
 
 };
 
-struct PCB processTable[20];
-int shmid;
-int *shm_ptr;
 
 //Loops throuch process table and clears shared memory if 60 seconds have passed
 void kill_processes(int sig){
@@ -50,6 +47,11 @@ void usage (const char * app) {
 	fprintf(stderr, "	-i interval of seconds for children processes to launch in seconds e.g. 0.5 seconds.\n");
 }
 
+// Global variables 
+struct PCB processTable[20];
+int shmid;
+int *shm_ptr;
+
 int main(int argc, char** argv) {
 
 // Signal to kill all children processes, then frees up memory after 60 seconds. 
@@ -61,13 +63,12 @@ alarm(60);
 // Setup counters for counting processes and totals
 int c = 0; // Counts children
 int total = 0; // total launched children
-int proc; // Processes
-int simul;// Simuntaneous processes.
-float timeLimit; // Time limit passed through argument.
-float interval; // Interval time passed through arguement.
-float lastPrintTime = 0; // Counter for last print time.
-float currentTime = 0; // Counter for tracking currentTime within clock.
-float lastLaunchTime = 0; // Counter for tracking time of last launched process.
+int proc; // Proceeses
+int simul;// Simuntaneous processes
+float timeLimit; // Time limit passed through argument
+float interval; // Interval time passed through arguement
+float lastPrintTime = 0; // Counter for last print time
+float currentTime = 0; // Counter for tracking currentTime within clock 
 
 //Setup Shared memory, error checking if no id is found
 
@@ -78,13 +79,8 @@ if ( shmid == -1 ) {
           exit (1);
 }
 
-// Intitializes pointer and attaches ID to whatever memory location the OS decides. With error checking
+// Intitializes pointer and attaches ID to whatever memory location the OS decides. 
 shm_ptr = (int *)shmat(shmid, NULL, 0);
-if (shm_ptr == (void *) -1) {
-	fprintf(stderr, "Failed to attach memory\n");
-		exit(1);
-}
-
 shm_ptr[0] = 0; // Counter for seconds
 shm_ptr[1] = 0; // Counter for nanoseconds 
 
@@ -166,6 +162,9 @@ while ((opt = getopt(argc, argv, "hn:s:t:i:")) != -1)
 		lastPrintTime = currentTime;
 	}
 	
+	// Counts time before last launched
+	float lastLaunchTime = 0;
+
 	// Launch new child is conditions are met. 
 	if ( c < simul && total < proc && (currentTime - lastLaunchTime) >= interval) {
 	
