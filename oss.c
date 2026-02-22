@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/wait.h>
 #include <signal.h>
 
 // Macro defined key and buffer size
@@ -60,15 +61,16 @@ signal(SIGINT, kill_processes); // Handles freeing memory if ctrl-c is utilized,
 alarm(60);
 
 // Setup counters for counting processes and totals
-int c = 0;
-int total = 0;
+int c = 0; // Counts children
+int total = 0; // total launched children
 int proc;
 int simul;
 float timeLimit;
 float interval;
 
 //Setup Shared memory, error checking if no id is found
-int shmid = shmget ( SHMKEY, BUFF_SZ, 0666 | IPC_CREAT );
+
+shmid = shmget ( SHMKEY, BUFF_SZ, 0666 | IPC_CREAT );
 
 if ( shmid == -1 ) {
          fprintf(stderr, "Error in generating Shard memory for parent.\n");
@@ -76,12 +78,12 @@ if ( shmid == -1 ) {
 }
 
 // Intitializes pointer and attaches ID to whatever memory location the OS decides. 
-int shm_ptr = (int *)shmat(shmid, NULL, 0);
+shm_ptr = (int *)shmat(shmid, NULL, 0);
 shm_ptr[0] = 0; // Counter for seconds
 shm_ptr[1] = 0; // Counter for nanoseconds 
 
 char opt;
-while ((opt = getopt(argc, argv, "hn:s:t:i:")) != =1)
+while ((opt = getopt(argc, argv, "hn:s:t:i:")) != -1)
 	{
 	switch (opt) {
 		case 'h':
@@ -100,28 +102,111 @@ while ((opt = getopt(argc, argv, "hn:s:t:i:")) != =1)
 			timeLimit = atof(optarg);
 			break;
 
-		case 'i'
+		case 'i':
 			interval = atof(optarg);
 			break;
 		
 		default:
 			printf("Incorrect input, please follow the usage below.\n");
 			usage(argv[0]);
-			return (EXIT_failure);
+			return (EXIT_FAILURE);
+	}
+        
 	}
 
+	// Declarations for status, pid, and counter for 0.5 seconds
+	int status;
+	pid_t pid;
+	float lastPrintTime = 0;
+	float currentTime = 0;
+	
+	
+	while ( total  < proc || c > 0 ) {
+	
+	shm_ptr[1] += 10000000;	//10 miliseconds for counting		 
+	if (shm_ptr[1] >= 1000000000){ 
+		shm_ptr[0]++; 
+		shm_ptr[1] -= 1000000000;
+	}
 
+	currentTime = shm_ptr[0] + (shm_ptr[1] / 1000000000.0);
 
+	// Non-blocking wait call checking child termination
+	pid = waitpid(-1, &status, WNOHANG);
+	if (pid > 0){
+		
+		// Loops and counts process tables to check for terminated pids
+		for (int i = 0; i < 20; i++) {
+			if (processTable[i].pid == pid) {
+			    processTable[i].occupied = 0;
+			    c--;
+			    break;
+			}
+		}
+		//update
+		//set entry to unoccupied
+
+	}
+	
+	
+	if (currentTime - lastPrintTime >= 0.5) {
+	   
+				
+		lastPrintTime = currentTIme;
+	}
+	
+	// Counts time before last launched
+	float lastLaunchTime = 0;
+										
+	currentTime = shm_ptr[0] + (shm_ptr[1] / 1000000000.0);	// Calculates current time
+	// Launch new child is conditions are met. 
+	if ( c < simul && total < proc && (currentTime - lastLaunchTime) >= interval) {
+	
+	char secArg[20];
+	char nanoArg[20];
+	
+	int workerSec = (int)timeLimit;
+	int workerNano = (timeLimit - workerSec) * 1000000000;
+	
+	sprintf(secArg, "%d", workerSec);
+	sprintf(nanoArg, "%d", workerNano);
+	pid_t worker = fork();
 	
 
+	if ( worker == 0) {
+	
+		execl("./worker", "worker", secArg, nanoArg, NULL);
+		fprintf(stderr, "Excel Failed\n");
+		exit(1);
+	}
+	
+	if (worker > 0) {
 
+		// Fills PCB 
+		for (int i = 0; i < 20; i++) {
+			if (!processTable[i].occupied) {
+				processTable[i].occupied = 1;
+				processTable[i].pid = worker;
+				processTable[i].startSeconds = shm_ptr[0];
+				processTable[i].startNano = shm_ptr[1];
+				break;
+					}
+				}
+		//fork and exec 
+		//fill PCB entry with pid, start time, and ending time
+		lastLaunchTime = currentTime;
+		c++;
+		total++;
+			}	
+		}
 
 	}
 
+//print final report
+
+ return(EXIT_SUCCESS);
+}
 
 
 
 
-
-
-}	
