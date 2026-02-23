@@ -5,4 +5,38 @@ How to make project: make
 
 Example of how to run project: ./oss -n 3 -s 3 -t 4.2 -i 0.6
 
-Usage: 
+Usage: Program runs a simulated clock to track a Process Control Table and processes shared with a worker file (child process)and the oss.c file. Both files share the same memory with clock time simulated. Program will only accept those arguements above. You can run just -n, it will only run for 60 seconds top regardless of the arguments passed above. Then terminated with shared memory released.  
+
+./oss [-n proc] [-s simul] [-t timeLimitForChildren] [-i interval]
+
+-n proc, sets total number of children to launch.
+-s simul, max number of children running simultaneously.
+-t timeLimit, time limit for childen processes set in seconds e.g 4.5.
+-i interval of seconds for children processes to launch in seconds e.g. 0.5 seconds.
+
+Generative AI used: Claude 
+
+Prompts: Give me some starting points and tips, do not code for me
+
+Summary: Gave me some good starting points and issues to think about within shared memory
+
+Prompt: Please review my worker.c code for issues (Did this three times)
+
+Summary: I incorrectly written my arguements using atoi[1] or atoi[2] which would of passed the incorrect array vlues for the times, and I forgot to attach memory using shmat, and my main loop had,logical issues. 
+
+Prompt: Please look at my termination function, what do I need to do to handle SIGTSTP?
+
+Summary: Would've added too much complexity to handle SIGTSTP for this project, seemed too much. AI recommended cleaning in-case of ctlr-c. 
+
+Prompt: Here's the shell of my core logic, please address any issue. 
+
+Summary: I had some variables inside loops that needed to be declared outside the loops, and some logic issues concerning how I was keeping time.
+
+Prompt: Check syntax and other minor errors
+
+Summary: While writing my loops I missed two brackets, had a few variables with multiple simple typos such as "TIme" instead fof "Time" 
+
+Prompt: Please check for any major bugs or issue one last time
+
+Summary: One of my counting variables were still within the while loop, haad to move above. When I compiled with the makefile there were some small issues I didn't catch, but fixed the compiler issues. Any other bugs during testing were adjusting the simulated clock times. 
+

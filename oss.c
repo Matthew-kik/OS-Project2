@@ -128,7 +128,7 @@ while ((opt = getopt(argc, argv, "hn:s:t:i:")) != -1)
 	// Loop for logic
 	while ( total  < proc || c > 0 ) {
 	
-	shm_ptr[1] += 10000000;	//10 miliseconds for counting		 
+	shm_ptr[1] += 1000; //slowed down for better counting		 
 	if (shm_ptr[1] >= 1000000000){ 
 		shm_ptr[0]++; 
 		shm_ptr[1] -= 1000000000;
